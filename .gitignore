@@ -1,0 +1,11 @@
+node_modules/
+
+# compiled typescript
+dist/
+
+# env
+.env*
+!.env.example
+
+# database
+/data

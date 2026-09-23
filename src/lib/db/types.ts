@@ -1,0 +1,21 @@
+export enum Day {
+    Monday = 0,
+    Tuesday = 1,
+    Wednesday = 2,
+    Thursday = 3,
+    Friday = 4,
+    Saturday = 5,
+    Sunday = 6
+}
+
+export interface Lesson {
+    id?: number;
+    day: Day;
+    hour: number;
+    class: string;
+    teacher: string | null;
+    room: string | null;
+    subject: string | null;
+    raw_text: string | null;
+    is_parsed: 0 | 1;
+}
