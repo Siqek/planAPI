@@ -1,0 +1,11 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      SCHEDULE_BASE_URL: https://plan.zs1mm.edu.pl/nauczycielezs1/
+      SCHEDULES_URL: https://plan.zs1mm.edu.pl/nauczycielezs1/lista.html
+    restart: unless-stopped
