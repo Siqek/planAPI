@@ -19,3 +19,12 @@ export interface Lesson {
     raw_text: string | null;
     is_parsed: 0 | 1;
 }
+
+export type LessonFilters = {
+    day?: string | undefined;
+    hour?: string | undefined;
+    class?: string | undefined;
+    teacher?: string | undefined;
+    subject?: string | undefined;
+    room?: string | undefined;
+};

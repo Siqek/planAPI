@@ -1,36 +1,34 @@
-import Database from 'better-sqlite3';
-import { Lesson } from '../types';
+import Database from "better-sqlite3";
+import { Lesson, LessonFilters } from "../types";
 
-export interface LessonFilter {
-  day?: string;
-  hour?: number;
-  teacher?: string;
-  room?: string;
-  class?: string;
-  onlyParsed?: boolean;
-}
+export function findLessons(db: Database.Database, filters: LessonFilters): Lesson[] {
 
-export function findLessons(db: Database.Database, filter: LessonFilter): Lesson[] {
-    const conditions: string[] = [];
-    const params: Record<string, unknown> = {};
+    const filterDefinitions = [
+        { key: 'day', operator: '=' },
+        { key: 'hour', operator: '=' },
+        { key: 'class', operator: 'LIKE' },
+        { key: 'teacher', operator: 'LIKE' },
+        { key: 'subject', operator: 'LIKE' },
+        { key: 'room', operator: 'LIKE' },
+    ] as const;
 
-    const fieldMap: Record<keyof Omit<LessonFilter, 'onlyParsed'>, string> = {
-        day: 'day', hour: 'hour', teacher: 'teacher', room: 'room', class: 'class',
-    };
+    const activeFilters = filterDefinitions.filter(
+        ({ key }) => filters[key] !== undefined
+    );
 
-    for (const [key, column] of Object.entries(fieldMap)) {
-        const value = filter[key as keyof typeof fieldMap];
-        if (value !== undefined) {
-        conditions.push(`${column} = @${key}`);
-        params[key] = value;
-        }
-    }
+    const where = activeFilters
+        .map(({ key, operator }) => `${key} ${operator} @${key}`)
+        .join(" AND ");
 
-    if (filter.onlyParsed) {
-        conditions.push(`is_parsed = 1`);
-    }
+    const params = Object.fromEntries(
+        activeFilters.map(({ key }) => [key, filters[key]])
+    );
 
-    const where = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
-    const stmt = db.prepare(`SELECT * FROM lessons ${where}`);
+    const stmt = db.prepare(`
+        SELECT *
+        FROM lessons
+        ${where ? `WHERE ${where}` : ""};
+    `);
+
     return stmt.all(params) as Lesson[];
 }

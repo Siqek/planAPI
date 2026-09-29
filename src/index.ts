@@ -1,12 +1,17 @@
 import express from "express";
 import cors from "cors";
 
+import * as dotenv from "dotenv";
+dotenv.config();
+
 import { getDb, insertLessonsBulk } from "./lib/db";
 
-import * as dotenv from "dotenv";
 import Database from "better-sqlite3";
 import { parseAllClasses } from "./lib/scraper/internal/parseAllClasses";
-dotenv.config();
+
+// controllers
+import { countLessonsByTeacherAndSubject } from "./controllers/lessons/count";
+import { findLessons } from "./controllers/lessons/find";
 
 async function main() {
     // inits DB
@@ -19,6 +24,10 @@ async function main() {
     app.use(express.json());
 
     app.get("/health", (_req, res) => res.json({ ok: true }));
+
+    app.get("/lessons/count/:class", countLessonsByTeacherAndSubject);
+
+    app.get("/lessons/find", findLessons);
 
     const port = Number(process.env.PORT) || 3000;
     app.listen(port, () => console.log(`Listening on ${port}`));
