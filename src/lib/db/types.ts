@@ -28,3 +28,8 @@ export type LessonFilters = {
     subject?: string | undefined;
     room?: string | undefined;
 };
+
+export interface Teacher {
+    id: string;
+    name: string;
+};

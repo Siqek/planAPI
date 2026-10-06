@@ -12,9 +12,16 @@ export function initDb(pathname: string): Database.Database {
     fs.mkdirSync(dataDir, { recursive: true });
 
     const db = new Database(absoluteDbPath);
+
     db.pragma('journal_mode = WAL');
+    db.pragma('foreign_keys = ON');
 
     db.exec(`
+        CREATE TABLE IF NOT EXISTS teachers (
+            id TEXT PRIMARY KEY,
+            name TEXT NOT NULL
+        );
+
         CREATE TABLE IF NOT EXISTS lessons (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             day INTEGER NOT NULL,
@@ -24,7 +31,9 @@ export function initDb(pathname: string): Database.Database {
             subject TEXT,
             room TEXT,
             raw_text TEXT,
-            is_parsed INTEGER DEFAULT 1
+            is_parsed INTEGER DEFAULT 1,
+
+            FOREIGN KEY (teacher) REFERENCES teachers(id)
         );
 
         CREATE INDEX IF NOT EXISTS idx_day_hour ON lessons(day, hour);

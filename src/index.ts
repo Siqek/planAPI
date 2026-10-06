@@ -12,6 +12,7 @@ import { parseAllClasses } from "./lib/scraper/internal/parseAllClasses";
 // controllers
 import { countLessonsByTeacherAndSubject } from "./controllers/lessons/count";
 import { findLessons } from "./controllers/lessons/find";
+import { insertTeachersBulk } from "./lib/db/internal/insert";
 
 async function main() {
     // inits DB
@@ -34,21 +35,36 @@ async function main() {
 }
 
 main().catch((err) => {
-  console.error("Startup failed: ", err);
-  process.exit(1);
+    console.error("Startup failed: ", err);
+    process.exit(1);
 });
 
 async function fillDbIfEmpty() {
     const db: Database.Database = getDb();
 
-    const result = db
+    const { count: lessonCount } = db
         .prepare(`SELECT COUNT(*) AS count FROM lessons WHERE id IS NOT NULL`)
         .get() as { count: number };
 
-    if (result.count > 0) {
-        return;
+    if (lessonCount === 0) {
+        console.log(
+            `[INFO] No lessons found in the database. Populating the 'lessons' table...`
+        );
+
+        const lessons = await parseAllClasses();
+        insertLessonsBulk(db, lessons);
     }
 
-    const lessons = await parseAllClasses();
-    insertLessonsBulk(db, lessons);
+    const { count: teacherCount } = db
+        .prepare(`SELECT COUNT(*) AS count FROM teachers WHERE id IS NOT NULL`)
+        .get() as { count: number };
+
+    if (teacherCount === 0) {
+        console.log(
+            `[INFO] No teachers found in the database. Populating the 'teachers' table...`
+        );
+
+        // const teachers = [];
+        // insertTeachersBulk(db, teachers);
+    }
 }

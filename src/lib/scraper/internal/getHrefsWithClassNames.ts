@@ -3,13 +3,16 @@ import * as cheerio from "cheerio";
 import { fetchHTML } from "./fetchHTML";
 import type { HrefWithClassName } from "../types";
 
-export async function getHrefsWithClassNames(url: URL, hrefRegex: RegExp, itemSelector: string): Promise<HrefWithClassName[]> {
+export async function getHrefsWithClassNames(url: URL): Promise<HrefWithClassName[]> {
+
+    const HrefRegex: RegExp = /plany\/o\d+\.html/;
+    const ItemSelector: string = "a[href]";
 
     const html = await fetchHTML(url);
     const $ = cheerio.load(html);
 
-    const matchingItems = $(itemSelector)
-        .filter((_, el) => hrefRegex.test($(el).attr('href') ?? ""));
+    const matchingItems = $(ItemSelector)
+        .filter((_, el) => HrefRegex.test($(el).attr('href') ?? ""));
 
     const hrefsWithClassNames = matchingItems.map((_, el) => {
         const elem = $(el);
