@@ -9,6 +9,10 @@ export async function parseAllClasses(): Promise<Lesson[]> {
         throw new Error("SCHEDULES_URL is undefined.");
     }
 
+    if (process.env.SCHEDULE_BASE_URL === undefined) {
+        throw new Error("SCHEDULE_BASE_URL is undefined.");
+    }
+
     const hrefsWithClassNames = await getHrefsWithClassNames(new URL(process.env.SCHEDULES_URL));
 
     for (const { href, className } of hrefsWithClassNames) {

@@ -31,9 +31,7 @@ export function initDb(pathname: string): Database.Database {
             subject TEXT,
             room TEXT,
             raw_text TEXT,
-            is_parsed INTEGER DEFAULT 1,
-
-            FOREIGN KEY (teacher) REFERENCES teachers(id)
+            is_parsed INTEGER DEFAULT 1
         );
 
         CREATE INDEX IF NOT EXISTS idx_day_hour ON lessons(day, hour);

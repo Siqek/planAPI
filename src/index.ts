@@ -1,34 +1,27 @@
-import express from "express";
-import cors from "cors";
-
 import * as dotenv from "dotenv";
 dotenv.config();
 
-import { getDb, insertLessonsBulk } from "./lib/db";
+import app from "./app";
+
+import { getDb, insertLessonsBulk, insertTeachersBulk } from "./lib/db";
 
 import Database from "better-sqlite3";
 import { parseAllClasses } from "./lib/scraper/internal/parseAllClasses";
-
-// controllers
-import { countLessonsByTeacherAndSubject } from "./controllers/lessons/count";
-import { findLessons } from "./controllers/lessons/find";
-import { insertTeachersBulk } from "./lib/db/internal/insert";
+import { getTeachers } from "./lib/scraper";
 
 async function main() {
+    if (process.env.SCHEDULES_URL === undefined) {
+        throw new Error("SCHEDULES_URL is undefined.");
+    }
+
+    if (process.env.SCHEDULE_BASE_URL === undefined) {
+        throw new Error("SCHEDULE_BASE_URL is undefined.");
+    }
+
     // inits DB
     getDb();
 
     await fillDbIfEmpty();
-
-    const app = express();
-    app.use(cors())
-    app.use(express.json());
-
-    app.get("/health", (_req, res) => res.json({ ok: true }));
-
-    app.get("/lessons/count/:class", countLessonsByTeacherAndSubject);
-
-    app.get("/lessons/find", findLessons);
 
     const port = Number(process.env.PORT) || 3000;
     app.listen(port, () => console.log(`Listening on ${port}`));
@@ -64,7 +57,7 @@ async function fillDbIfEmpty() {
             `[INFO] No teachers found in the database. Populating the 'teachers' table...`
         );
 
-        // const teachers = [];
-        // insertTeachersBulk(db, teachers);
+        const teachers = await getTeachers();
+        insertTeachersBulk(db, teachers);
     }
 }
