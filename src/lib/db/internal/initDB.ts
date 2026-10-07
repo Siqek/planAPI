@@ -27,7 +27,7 @@ export function initDb(pathname: string): Database.Database {
             day INTEGER NOT NULL,
             hour INTEGER NOT NULL,
             class TEXT NOT NULL,
-            teacher TEXT,
+            teacher_id TEXT,
             subject TEXT,
             room TEXT,
             raw_text TEXT,
@@ -35,7 +35,7 @@ export function initDb(pathname: string): Database.Database {
         );
 
         CREATE INDEX IF NOT EXISTS idx_day_hour ON lessons(day, hour);
-        CREATE INDEX IF NOT EXISTS idx_teacher ON lessons(teacher);
+        CREATE INDEX IF NOT EXISTS idx_teacher ON lessons(teacher_id);
         CREATE INDEX IF NOT EXISTS idx_room ON lessons(room);
         CREATE INDEX IF NOT EXISTS idx_class ON lessons(class);
     `);

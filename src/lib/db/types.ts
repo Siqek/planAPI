@@ -13,7 +13,8 @@ export interface Lesson {
     day: Day;
     hour: number;
     class: string;
-    teacher: string | null;
+    teacher_id: string | null;
+    teacher_name: string | null;
     room: string | null;
     subject: string | null;
     raw_text: string | null;

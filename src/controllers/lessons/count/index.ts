@@ -33,10 +33,18 @@ export function countLessonsByTeacherAndSubject(req: Request, res: Response): vo
 
     try {
         const stmt = db.prepare(`
-            SELECT class, teacher, subject, raw_text, COUNT(*) as lessonsCount
-            FROM lessons
+            SELECT
+                class,
+                teacher_id,
+                t.name AS teacher_name,
+                subject,
+                raw_text,
+                COUNT(*) AS lessons_count
+            FROM lessons l
+			LEFT JOIN teachers t
+				ON l.teacher_id = t.id
             WHERE class LIKE @class
-            GROUP BY teacher, subject, raw_text;
+            GROUP BY teacher_id, subject, raw_text;
         `);
 
         const lessonsCount = stmt.all({ class: className.trim() });

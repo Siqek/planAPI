@@ -25,8 +25,20 @@ export function findLessons(db: Database.Database, filters: LessonFilters): Less
     );
 
     const stmt = db.prepare(`
-        SELECT *
-        FROM lessons
+        SELECT
+			l.id AS id,
+			day,
+			hour,
+			class,
+			teacher_id,
+			t.name AS teacher_name,
+			room,
+			subject,
+			raw_text,
+			is_parsed
+        FROM lessons l
+		LEFT JOIN teachers t
+			ON l.teacher_id = t.id
         ${where ? `WHERE ${where}` : ""};
     `);
 

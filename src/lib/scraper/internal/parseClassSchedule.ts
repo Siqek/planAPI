@@ -28,12 +28,13 @@ export async function parseClassSchedule(scheduleUrl: URL, className: string): P
                 continue;
             }
 
-            lessons.forEach(({ teacher, room, subject, raw_text, is_parsed }: CellData) => {
+            lessons.forEach(({ teacher_id, room, subject, raw_text, is_parsed }: CellData) => {
                 const lesson: Lesson = {
                     day,
                     hour,
                     class: className,
-                    teacher,
+                    teacher_id,
+                    teacher_name: null,
                     room,
                     subject,
                     raw_text,
@@ -50,7 +51,7 @@ export async function parseClassSchedule(scheduleUrl: URL, className: string): P
 type CellData = {
     subject: string | null;
     room: string | null;
-    teacher: string | null;
+    teacher_id: string | null;
     raw_text: string | null;
     is_parsed: 0 | 1
 };
@@ -77,7 +78,7 @@ function parseLessonCell($: cheerio.CheerioAPI, cell: cheerio.Cheerio<Element>):
             const parsedLesson: CellData = {
                 subject: $(subjectItems).text(),
                 room: $(classroomItems).text(),
-                teacher: $(teacherItems).text(),
+                teacher_id: $(teacherItems).text(),
                 raw_text: null,
                 is_parsed: 1
             };
@@ -89,7 +90,7 @@ function parseLessonCell($: cheerio.CheerioAPI, cell: cheerio.Cheerio<Element>):
         const unparsedLesson: CellData = {
             subject: null,
             room: null,
-            teacher: null,
+            teacher_id: null,
             raw_text: $(lesson).text(),
             is_parsed: 0
         };

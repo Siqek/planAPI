@@ -20,11 +20,14 @@ export async function getTeachers(): Promise<Teacher[]> {
     const matchingItems = $(ItemSelector)
         .filter((_, el) => HrefRegex.test($(el).attr('href') ?? ""));
 
+    const NameRegex = /^[\p{L}\.\- ]+(?=\s+\()/u;
+    const IdRegex = /(?<=\()\p{L}{2}(?=\)$)/u;
+
     const teachers: Teacher[] = matchingItems.map((_, el) => {
         const elem = $(el);
         const text = elem.text().trim();
-        const name = text.match(/^[\p{L}\.]+/u)?.[0] ?? "";
-        const id = text.match(/(?<=\()\p{L}{2}(?=\)$)/u)?.[0] ?? "";
+        const id = text.match(IdRegex)?.[0] ?? "";
+        const name = text.match(NameRegex)?.[0] ?? "";
         return {
             id,
             name
