@@ -11,7 +11,7 @@ All query parameters are optional. When no filters are provided, the endpoint re
 | `day`     | `string` | No       | Exact (`=`) | Day of the week. Uses the numeric value of the `Day` enum. |
 | `hour`    | `string` | No       | Exact (`=`) | Lesson hour.                                               |
 | `class`   | `string` | No       | `LIKE`      | Class name.                                                |
-| `teacher` | `string` | No       | `LIKE`      | Teacher name.                                              |
+| `teacher` | `string` | No       | `LIKE`      | Teacher identifier.                                        |
 | `subject` | `string` | No       | `LIKE`      | Subject name.                                              |
 | `room`    | `string` | No       | `LIKE`      | Classroom/room name.                                       |
 
@@ -52,7 +52,7 @@ The `class`, `teacher`, `subject`, and `room` filters use SQLite's `LIKE` operat
 
 ```text
 class LIKE value
-teacher LIKE value
+teacher_id LIKE value
 subject LIKE value
 room LIKE value
 ```
@@ -112,7 +112,7 @@ GET /lessons/find?class=3A
 #### Find lessons by teacher
 
 ```http
-GET /lessons/find?teacher=Kowalski
+GET /lessons/find?teacher=AB
 ```
 
 #### Find lessons by subject using partial matching
@@ -148,7 +148,8 @@ Example:
     "day": 0,
     "hour": 8,
     "class": "3A",
-    "teacher": "John Smith",
+    "teacher_id": "AB",
+    "teacher_name": "John Smith",
     "room": "101",
     "subject": "Mathematics",
     "raw_text": null,
@@ -159,29 +160,29 @@ Example:
 
 ### Lesson object
 
-| Field       | Type     | Nullable | Description                                         |
-| ----------- | -------- | -------- | --------------------------------------------------- |
-| `id`        | `number` | Yes      | Unique lesson identifier.                           |
-| `day`       | `number` | No       | Day of the week. See the `Day` values above.        |
-| `hour`      | `number` | No       | Lesson hour.                                        |
-| `class`     | `string` | No       | Class/group assigned to the lesson.                 |
-| `teacher`   | `string` | Yes      | Teacher assigned to the lesson.                     |
-| `room`      | `string` | Yes      | Room in which the lesson takes place.               |
-| `subject`   | `string` | Yes      | Lesson subject.                                     |
-| `raw_text`  | `string` | Yes      | Original, unparsed text associated with the lesson. |
-| `is_parsed` | `0 \| 1` | No       | Indicates whether the lesson data has been parsed.  |
+| Field          | Type     | Nullable | Description                                                       |
+| -------------- | -------- | -------- | ----------------------------------------------------------------- |
+| `id`           | `number` | Yes      | Unique lesson identifier.                                         |
+| `day`          | `number` | No       | Day of the week. See the `Day` values above.                      |
+| `hour`         | `number` | No       | Lesson hour.                                                      |
+| `class`        | `string` | No       | Class/group assigned to the lesson.                               |
+| `teacher_id`   | `string` | Yes      | Identifier of the teacher assigned to the lesson.                 |
+| `teacher_name` | `string` | Yes      | Name of the teacher. Can be `null` if no matching teacher exists. |
+| `room`         | `string` | Yes      | Room in which the lesson takes place.                             |
+| `subject`      | `string` | Yes      | Lesson subject.                                                   |
+| `raw_text`     | `string` | Yes      | Original, unparsed text associated with the lesson.               |
+| `is_parsed`    | `0 \| 1` | No       | Indicates whether the lesson data has been parsed.                |
 
 The value of `is_parsed` determines how the lesson data is stored:
 
-| `is_parsed` | `raw_text` | `teacher` | `subject` | `room`    | Description                                                                 |
-| ----------: | ---------- | --------- | --------- | --------- | --------------------------------------------------------------------------- |
-|         `0` | populated  | `null`    | `null`    | `null`    | Lesson data has not been parsed. The original data is stored in `raw_text`. |
-|         `1` | `null`     | populated | populated | populated | Lesson data has been parsed into individual fields.                         |
+| `is_parsed` | `raw_text` | `teacher_id` | `subject` | `room`    | Description                                                                 |
+| ----------: | ---------- | ------------ | --------- | --------- | --------------------------------------------------------------------------- |
+|         `0` | populated  | `null`       | `null`    | `null`    | Lesson data has not been parsed. The original data is stored in `raw_text`. |
+|         `1` | `null`     | populated    | populated | populated | Lesson data has been parsed into individual fields.                         |
 
-When `is_parsed` is `0`, the parsed fields `teacher`, `subject`, and `room` are `null` and the original lesson data is available in `raw_text`.
+When `is_parsed` is `0`, the parsed fields `teacher_id`, `subject`, and `room` are `null` and the original lesson data is available in `raw_text`.
 
-When `is_parsed` is `1`, `raw_text` is `null` and the lesson data is available in the corresponding parsed fields.
-
+When `is_parsed` is `1`, `raw_text` is `null` and the lesson data is available in the corresponding parsed fields. `teacher_name` is resolved from `teacher_id` using a `LEFT JOIN` and may still be `null`.
 
 ### Error response
 
@@ -261,7 +262,7 @@ class LIKE '%3A%'
 
 Results are grouped by:
 
-* `teacher`
+* `teacher_id`
 * `subject`
 * `raw_text`
 
@@ -270,10 +271,10 @@ The response also contains the `class` value and the calculated number of lesson
 The SQL query is equivalent to:
 
 ```sql
-SELECT class, teacher, subject, raw_text, COUNT(*) as lessonsCount
+SELECT class, teacher_id, subject, raw_text, COUNT(*) as lessons_count
 FROM lessons
 WHERE class LIKE @class
-GROUP BY teacher, subject, raw_text;
+GROUP BY teacher_id, subject, raw_text;
 ```
 
 ### Example request
@@ -292,14 +293,16 @@ Example:
 [
   {
     "class": "3A",
-    "teacher": "John Smith",
+    "teacher_id": "AB",
+    "teacher_name": "John Smith",
     "subject": "Mathematics",
     "raw_text": null,
     "lessonsCount": 4
   },
   {
     "class": "3A",
-    "teacher": "Jane Doe",
+    "teacher_id": "BC",
+    "teacher_name": "Jane Doe",
     "subject": "Physics",
     "raw_text": null,
     "lessonsCount": 2
@@ -309,15 +312,16 @@ Example:
 
 ### Response fields
 
-| Field          | Type     | Nullable | Description                             |
-| -------------- | -------- | -------- | --------------------------------------- |
-| `class`        | `string` | No       | Class matching the requested parameter. |
-| `teacher`      | `string` | Yes      | Teacher associated with the lessons.    |
-| `subject`      | `string` | Yes      | Subject associated with the lessons.    |
-| `raw_text`     | `string` | Yes      | Raw lesson text.                        |
-| `lessonsCount` | `number` | No       | Number of lessons in the group.         |
+| Field           | Type     | Nullable | Description                                                       |
+| --------------- | -------- | -------- | ----------------------------------------------------------------- |
+| `class`         | `string` | No       | Class matching the requested parameter.                           |
+| `teacher_id`    | `string` | Yes      | Identifier of the teacher associated with the lessons.            |
+| `teacher_name`  | `string` | Yes      | Name of the teacher. Can be `null` if no matching teacher exists. |
+| `subject`       | `string` | Yes      | Subject associated with the lessons.                              |
+| `raw_text`      | `string` | Yes      | Raw lesson text.                                                  |
+| `lessons_count` | `number` | No       | Number of lessons in the group.                                   |
 
-`teacher`, `subject`, and `raw_text` can be `null` because the corresponding fields in the `Lesson` model are nullable.
+`teacher_id`, `teacher_name`, `subject`, and `raw_text` can be `null` because the corresponding fields in the `Lesson` model are nullable.
 
 ### Error responses
 
