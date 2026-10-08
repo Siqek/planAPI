@@ -22,6 +22,11 @@ export function initDb(pathname: string): Database.Database {
             name TEXT NOT NULL
         );
 
+        CREATE TABLE IF NOT EXISTS rooms (
+            short_name TEXT PRIMARY KEY,
+            long_name TEXT NOT NULL
+        );
+
         CREATE TABLE IF NOT EXISTS lessons (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             day INTEGER NOT NULL,

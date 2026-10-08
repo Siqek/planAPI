@@ -34,3 +34,8 @@ export interface Teacher {
     id: string;
     name: string;
 };
+
+export interface Room {
+    short_name: string;
+    long_name: string;
+};

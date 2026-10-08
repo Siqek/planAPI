@@ -1,5 +1,5 @@
 import Database from 'better-sqlite3';
-import { Lesson, Teacher } from '../types';
+import { Lesson, Room, Teacher } from '../types';
 
 export function insertLesson(db: Database.Database, lesson: Lesson) {
     const stmt = db.prepare(`
@@ -17,7 +17,7 @@ export function insertLessonsBulk(db: Database.Database, lessons: Lesson[]) {
 
     const insertMany = db.transaction((rows: Lesson[]) => {
         for (const row of rows) {
-        stmt.run(row);
+            stmt.run(row);
         }
     });
 
@@ -32,9 +32,24 @@ export function insertTeachersBulk(db: Database.Database, teachers: Teacher[]) {
 
     const insertMany = db.transaction((rows: Teacher[]) => {
         for (const row of rows) {
-        stmt.run(row);
+            stmt.run(row);
         }
     });
 
     insertMany(teachers);
+}
+
+export function insertRoomsBulk(db: Database.Database, rooms: Room[]) {
+    const stmt = db.prepare(`
+        INSERT INTO rooms (short_name, long_name)
+        VALUES (@short_name, @long_name)
+    `);
+
+    const insertMany = db.transaction((rows: Room[]) => {
+        for (const row of rows) {
+            stmt.run(row);
+        }
+    });
+
+    insertMany(rooms);
 }

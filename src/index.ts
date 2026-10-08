@@ -3,11 +3,10 @@ dotenv.config();
 
 import app from "./app";
 
-import { getDb, insertLessonsBulk, insertTeachersBulk } from "./lib/db";
+import { getDb, insertLessonsBulk, insertRoomsBulk, insertTeachersBulk } from "./lib/db";
 
 import Database from "better-sqlite3";
-import { parseAllClasses } from "./lib/scraper/internal/parseAllClasses";
-import { getTeachers } from "./lib/scraper";
+import { getRooms, getTeachers, parseAllClasses } from "./lib/scraper";
 
 async function main() {
     if (process.env.SCHEDULES_URL === undefined) {
@@ -59,5 +58,18 @@ async function fillDbIfEmpty() {
 
         const teachers = await getTeachers();
         insertTeachersBulk(db, teachers);
+    }
+
+    const { count: roomCount } = db
+        .prepare(`SELECT COUNT(*) AS count FROM rooms WHERE short_name IS NOT NULL`)
+        .get() as { count: number };
+
+    if (roomCount === 0) {
+        console.log(
+            `[INFO] No rooms found in the database. Populating the 'rooms' table...`
+        );
+
+        const rooms = await getRooms();
+        insertRoomsBulk(db, rooms);
     }
 }
