@@ -1,3 +1,15 @@
+# API Documentation
+
+## Table of Contents
+
+ - [GET `/lessons/find`](#get-lessonsfind)
+
+ - [GET `/lessons/count/:class`](#get-lessonscountclass)
+
+ - [GET `/rooms/available/day/:day/hour/:hour`](#get-roomsavailabledaydayhourhour)
+
+---
+
 ## GET `/lessons/find`
 
 Returns lessons matching the specified filters.
@@ -204,6 +216,10 @@ If a database error occurs, the endpoint returns HTTP `500 Internal Server Error
 
 
 
+
+
+
+
 ## GET `/lessons/count/:class`
 
 Returns the number of lessons grouped by teacher, subject, and raw lesson text for the specified class.
@@ -379,3 +395,194 @@ If a database error occurs, the endpoint returns HTTP `500 Internal Server Error
 |  `400` | `INVALID_PARAM`          | The `class` parameter is empty or contains only whitespace. |
 |  `500` | `INTERNAL_ERROR`         | Database error.                                             |
 
+
+
+
+
+
+
+## GET `/rooms/available/day/:day/hour/:hour`
+
+Returns rooms that are available at the specified day and hour.
+
+The endpoint checks the `lessons` table and excludes rooms that are already assigned to a lesson matching both the specified day and hour.
+
+### Path parameters
+
+| Parameter | Type | Required | Description |
+| --------- | ---- | -------- | ----------- |
+| `day` | `number` | Yes | Day of the week, represented by an integer. |
+| `hour` | `number` | Yes | Lesson hour, represented by an integer. |
+
+Both parameters must:
+
+- be provided,
+- contain exactly one value,
+- not be empty or consist only of whitespace,
+- represent integers.
+
+### Day values
+
+The `day` parameter uses the numeric values defined by the `Day` enum:
+
+| Value | Day |
+| ----: | --- |
+| `0` | Monday |
+| `1` | Tuesday |
+| `2` | Wednesday |
+| `3` | Thursday |
+| `4` | Friday |
+| `5` | Saturday |
+| `6` | Sunday |
+
+For example:
+
+```http
+GET /rooms/available/0/8
+```
+
+returns rooms available on Monday during lesson hour `8`.
+
+### Matching behavior
+
+The endpoint selects rooms from the `rooms` table and excludes those whose `short_name` appears in the `lessons` table for the specified day and hour.
+
+The SQL query is equivalent to:
+
+```sql
+SELECT short_name, long_name
+FROM rooms
+WHERE short_name NOT IN (
+    SELECT DISTINCT room
+    FROM lessons
+    WHERE room IS NOT NULL
+      AND day = @day
+      AND hour = @hour
+);
+```
+
+The `day` and `hour` parameters use exact matching:
+
+```sql
+day = @day
+AND hour = @hour
+```
+
+Only rooms assigned to lessons matching both conditions are excluded. Lessons with a `NULL` room value do not exclude any room.
+
+The endpoint returns all rooms that satisfy these conditions. If no rooms are available, it returns an empty array.
+
+### Examples
+
+#### Get available rooms on Monday during hour 8
+
+```http
+GET /rooms/available/0/8
+```
+
+#### Get available rooms on Wednesday during hour 10
+
+```http
+GET /rooms/available/2/10
+```
+
+### Successful response
+
+The endpoint returns HTTP `200 OK` with an array of available room objects.
+
+Example:
+
+```json
+[
+    {
+        "short_name": "101",
+        "long_name": "Room 101"
+    },
+    {
+        "short_name": "102",
+        "long_name": "Room 102"
+    }
+]
+```
+
+If no rooms are available, the response is:
+
+```json
+[]
+```
+
+### Response fields
+
+| Field | Type | Nullable | Description |
+| ----- | ---- | -------- | ----------- |
+| `short_name` | `string` | No | Short name or identifier of the room. |
+| `long_name` | `string` | No | Full name of the room. |
+
+### Error responses
+
+#### Missing parameters
+
+If either the `day` or `hour` parameter is not provided, the endpoint returns HTTP `400 Bad Request`.
+
+```json
+{
+    "error": "MISSING_REQUIRED_PARAM",
+    "message": "'day' and 'hour' params are required."
+}
+```
+
+#### Multiple parameter values
+
+If either parameter contains multiple values, the endpoint returns HTTP `400 Bad Request`.
+
+```json
+{
+    "error": "TOO_MANY_PARAM_VALUES",
+    "message": "'day' and 'hour' params must contain a single value."
+}
+```
+
+#### Empty parameters
+
+If either parameter is empty or contains only whitespace, the endpoint returns HTTP `400 Bad Request`.
+
+```json
+{
+    "error": "INVALID_PARAM",
+    "message": "'day' and 'hour' params cannot be empty."
+}
+```
+
+#### Invalid parameter types
+
+If either parameter cannot be interpreted as an integer, the endpoint returns HTTP `400 Bad Request`.
+
+```json
+{
+    "error": "INVALID_PARAM",
+    "message": "'day' and 'hour' params must be integers."
+}
+```
+
+Note: The implementation validates that both values are integers but does not explicitly enforce a range for `day` or `hour`.
+
+#### Database error
+
+If a database error occurs, the endpoint returns HTTP `500 Internal Server Error`.
+
+```json
+{
+    "error": "INTERNAL_ERROR",
+    "message": "Database error."
+}
+```
+
+### Response codes
+
+| Status | Error code | Description |
+| -----: | ---------- | ----------- |
+| `200` | — | Request completed successfully. |
+| `400` | `MISSING_REQUIRED_PARAM` | One or both required parameters were not provided. |
+| `400` | `TOO_MANY_PARAM_VALUES` | One or both parameters contain multiple values. |
+| `400` | `INVALID_PARAM` | One or both parameters are empty or do not represent integers. |
+| `500` | `INTERNAL_ERROR` | Database error. |
