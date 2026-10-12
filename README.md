@@ -6,7 +6,11 @@
 
  - [GET `/lessons/count/:class`](#get-lessonscountclass)
 
+ - [GET `/rooms/all`](#get-roomsall)
+
  - [GET `/rooms/available/day/:day/hour/:hour`](#get-roomsavailabledaydayhourhour)
+
+ - [GET `/teachers/all`](#get-teachersall)
 
 ---
 
@@ -401,6 +405,68 @@ If a database error occurs, the endpoint returns HTTP `500 Internal Server Error
 
 
 
+## GET `/rooms/all`
+
+Returns all rooms stored in the database.
+
+The endpoint does not require any query parameters or request body.
+
+### Successful response
+
+The endpoint returns HTTP `200 OK` with an array of room objects.
+
+Example:
+
+```json
+[
+  {
+    "short_name": "A101",
+    "long_name": "Lecture Room A101"
+  },
+  {
+    "short_name": "B202",
+    "long_name": "Computer Laboratory B202"
+  }
+]
+```
+
+### Room object
+
+| Field        | Type     | Nullable | Description                      |
+| ------------ | -------- | -------- | -------------------------------- |
+| `short_name` | `string` | No      | Short name or identifier of the room. |
+| `long_name`  | `string` | No      | Full name of the room.           |
+
+If no rooms are stored in the database, the endpoint returns an empty array:
+
+```json
+[]
+```
+
+### Error response
+
+If a database error occurs, the endpoint returns HTTP `500 Internal Server Error`:
+
+```json
+{
+  "error": "INTERNAL_ERROR",
+  "message": "Database error."
+}
+```
+
+### Response codes
+
+| Status | Description                     |
+| -----: | ------------------------------- |
+|  `200` | Request completed successfully. |
+|  `500` | Internal database error.        |
+
+
+
+
+
+
+
 ## GET `/rooms/available/day/:day/hour/:hour`
 
 Returns rooms that are available at the specified day and hour.
@@ -586,3 +652,64 @@ If a database error occurs, the endpoint returns HTTP `500 Internal Server Error
 | `400` | `TOO_MANY_PARAM_VALUES` | One or both parameters contain multiple values. |
 | `400` | `INVALID_PARAM` | One or both parameters are empty or do not represent integers. |
 | `500` | `INTERNAL_ERROR` | Database error. |
+
+
+
+
+
+
+## GET `/teachers/all`
+
+Returns all teachers stored in the database.
+
+The endpoint does not require any query parameters or request body.
+
+### Successful response
+
+The endpoint returns HTTP `200 OK` with an array of teacher objects.
+
+Example:
+
+```json
+[
+  {
+    "id": "JS",
+    "name": "John Smith"
+  },
+  {
+    "id": "JD",
+    "name": "Jane Doe"
+  }
+]
+```
+
+### Teacher object
+
+| Field | Type | Nullable | Description |
+| ----- | ---- | -------- | ----------- |
+| `id` | `string` | No | Unique identifier of the teacher. |
+| `name` | `string` | No | Name of the teacher. |
+
+If no teachers are stored in the database, the endpoint returns an empty array:
+
+```json
+[]
+```
+
+### Error response
+
+If a database error occurs, the endpoint returns HTTP `500 Internal Server Error`:
+
+```json
+{
+  "error": "INTERNAL_ERROR",
+  "message": "Database error."
+}
+```
+
+### Response codes
+
+| Status | Description |
+| -----: | ----------- |
+| `200` | Request completed successfully. |
+| `500` | Internal database error. |
