@@ -6,6 +6,8 @@
 
  - [GET `/lessons/count/:class`](#get-lessonscountclass)
 
+ - [GET `/rooms/all`](#get-roomsall)
+
  - [GET `/rooms/available/day/:day/hour/:hour`](#get-roomsavailabledaydayhourhour)
 
 ---
@@ -394,6 +396,68 @@ If a database error occurs, the endpoint returns HTTP `500 Internal Server Error
 |  `400` | `TOO_MANY_PARAM_VALUES`  | The `class` parameter contains multiple values.             |
 |  `400` | `INVALID_PARAM`          | The `class` parameter is empty or contains only whitespace. |
 |  `500` | `INTERNAL_ERROR`         | Database error.                                             |
+
+
+
+
+
+
+
+## GET `/rooms/all`
+
+Returns all rooms stored in the database.
+
+The endpoint does not require any query parameters or request body.
+
+### Successful response
+
+The endpoint returns HTTP `200 OK` with an array of room objects.
+
+Example:
+
+```json
+[
+  {
+    "short_name": "A101",
+    "long_name": "Lecture Room A101"
+  },
+  {
+    "short_name": "B202",
+    "long_name": "Computer Laboratory B202"
+  }
+]
+```
+
+### Room object
+
+| Field        | Type     | Nullable | Description                      |
+| ------------ | -------- | -------- | -------------------------------- |
+| `short_name` | `string` | No      | Short name or identifier of the room. |
+| `long_name`  | `string` | No      | Full name of the room.           |
+
+If no rooms are stored in the database, the endpoint returns an empty array:
+
+```json
+[]
+```
+
+### Error response
+
+If a database error occurs, the endpoint returns HTTP `500 Internal Server Error`:
+
+```json
+{
+  "error": "INTERNAL_ERROR",
+  "message": "Database error."
+}
+```
+
+### Response codes
+
+| Status | Description                     |
+| -----: | ------------------------------- |
+|  `200` | Request completed successfully. |
+|  `500` | Internal database error.        |
 
 
 

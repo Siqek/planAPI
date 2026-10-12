@@ -3,6 +3,7 @@ import cors from "cors";
 
 // controllers
 import { countLessonsByTeacherAndSubject } from "./controllers/lessons/count";
+import { getAllRooms } from "./controllers/rooms/all";
 import { getAvailableRooms } from "./controllers/rooms/available";
 import { findLessons } from "./controllers/lessons/find";
 
@@ -15,6 +16,8 @@ app.get("/health", (_req, res) => res.json({ ok: true }));
 app.get("/lessons/count/:class", countLessonsByTeacherAndSubject);
 
 app.get("/lessons/find", findLessons);
+
+app.get("/rooms/all", getAllRooms);
 
 app.get("/rooms/available/day/:day/hour/:hour", getAvailableRooms);
 
